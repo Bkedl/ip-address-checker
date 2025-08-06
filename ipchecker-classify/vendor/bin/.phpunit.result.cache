@@ -1,0 +1,1 @@
+{"version":1,"defects":{"ClassifyIPsTest::testValidIPv4Addresses":7},"times":{"ClassifyIPsTest::testValidIPv4Addresses":0.004,"ClassifyIPsTest::testValidIPv6Addresses":0,"ClassifyIPsTest::testInvalidIPAddresses":0,"ClassifyIPsTest::testClassifyipv4":0.003,"ClassifyIPsTest::testClassifyipv6":0,"ClassifyIPsTest::testClassifyInvalid":0}}

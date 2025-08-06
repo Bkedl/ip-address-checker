@@ -1,0 +1,1 @@
+{"version":1,"defects":[],"times":{"GetTotalIPsTest::testGetTotalIPs":0.005,"GetTotalIPsTest::testEmptyIPs":0,"GetTotalIPsTest::testSingleIP":0,"GetTotalIPsTest::testMultipleIPsWithSpaces":0,"GetTotalIPsTest::testTotalIPs":0.005,"GetTotalIPsTest::testIPsNoSpace":0,"GetTotalIPsTest::testOtherVariations":0}}

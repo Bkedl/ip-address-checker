@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>IPAddressChecker</title>
+
+    <script type="text/javascript">
+
+
+        // the local urls for the backend services, will be commented out when racnher is used 
+        // let totalIPURL = "http://localhost:70/";
+        // let totalEmptyIPURL = "http://localhost:90/";
+        // let totalValidIPURL = "http://localhost:60/";
+        // let classifyIPURL = "http://localhost:8080/";
+        // let findCountryURL = "http://localhost:8081/";
+        // let findBadIPsURL = "http://localhost:8082/";
+
+        // testing proxy 
+        // let proxyURL = "http://reverproxy.40154530.qpc.qubcloud.uk/";
+
+        // testing task D 
+        let firstProx = "http://reverproxy.40154530.qpc.qubcloud.uk/";
+        let secondProx = "http://anotherproxy.40154530.qpc.qubcloud.uk/";
+
+        function getWorkingProxy(service, items, callback) {
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        callback(firstProx);
+                    } else {
+                        console.error(`Error: ${this.status}. Retrying with another proxy.`);
+                        trySecondProxy();
+                    }
+                }
+            };
+
+            xhttp.onerror = function () {
+                console.error("Request failed. Trying with another proxy.");
+                trySecondProxy();
+            };
+
+            function trySecondProxy() {
+                let xhttp2 = new XMLHttpRequest();
+                xhttp2.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            callback(secondProx);
+                        } else {
+                            document.getElementById('output-text').value = "Both proxies are not working, try later.";
+                        }
+                    }
+                };
+
+                xhttp2.onerror = function () {
+                    document.getElementById('output-text').value = "Both proxies are not working, try later.";
+                };
+
+                xhttp2.open("GET", `${secondProx}?service=${service}&items=${items}`, true);
+                xhttp2.send();
+            }
+
+            xhttp.open("GET", `${firstProx}?service=${service}&items=${items}`, true);
+            xhttp.send();
+        }
+
+
+
+        // let totalIPURL = "http://totalips.40154530.qpc.qubcloud.uk/";
+        // let totalEmptyIPURL = "http://emptyips.40154530.qpc.qubcloud.uk/";
+        // let totalValidIPURL = "http://validips.40154530.qpc.qubcloud.uk/";
+        // let classifyIPURL = "http://classifyips.40154530.qpc.qubcloud.uk/";
+        // let findCountryURL = "http://counrtyinfo.40154530.qpc.qubcloud.uk/";
+        // let findBadIPsURL = "http://badips.40154530.qpc.qubcloud.uk/";
+
+
+
+        // below are all the display fucntions (first two remin untouched from the initial clone in tis repo)
+        // they simoky just display a single number inthe output text area 
+
+        function displayTotalIP(total_ips) {
+            document.getElementById('output-text').value = 'Total IP addresses = ' + total_ips;
+        }
+
+        function displayTotalEmpty(total_empty_ips) {
+            document.getElementById('output-text').value = 'Total empty IP addresses = ' + total_empty_ips;
+        }
+
+        // These disply functions handle multiple ip addresses returned from the BE 
+        // Each BE service returns an object where the ip address is the key, and its associated 
+        // label (like Valid or whatever) is the value, the functions process this key value 
+        // pair and format it for display 
+        // the output string is empty because we haven't processed any ips yet but then the loop goes through each 
+        // ip in the results object and checks if the ip is not an empty string 
+        // after trimming any whitespace whihc avoids displaying empty lines like ''' -> Invalid'
+        // simply for beatifyied purposes 
+        // For each valid ip it appends the ip and its label to the output string in the format "ip ->> label'
+        // then at last the function updates the text area on the page to display the `output` string
+        // NB: ph is a placeholder rep the label associated with each ip in the results object
+        // and then going ti the next line with /n and also as a note $ is jut the template literals in js 
+        // but againb the output+= is just making this string like to output into the results
+        // the  document.getElementById is essenitally the same as the provided funcitons but 
+        // due to the compexity of a string vs just a number they had to be altered slightly 
+        // al ost liek the clear text ones but with the output being assigned and not a blank 
+        // string for the output and input
+
+
+        function displayIPValidation(results) {
+            let output = '';
+            for (const [ip, ph] of Object.entries(results)) {
+                if (ip.trim() !== '') {
+                    output += `${ip} -> ${ph}\n`;
+                }
+            }
+            document.getElementById('output-text').value = output;
+        }
+
+        function displayIPClassification(results) {
+            let output = '';
+            for (const [ip, ph] of Object.entries(results)) {
+                if (ip.trim() !== '') {
+                    output += `${ip} -> ${ph}\n`;
+                }
+            }
+            document.getElementById('output-text').value = output;
+        }
+
+        function displayCountryInformation(results) {
+            let output = '';
+            for (const [ip, ph] of Object.entries(results)) {
+                if (ip.trim() !== '') {
+                    output += `${ip} -> ${ph}\n`;
+                }
+            }
+            document.getElementById('output-text').value = output;
+        }
+
+        function displayBadIPs(results) {
+            let output = '';
+            for (const [ip, ph] of Object.entries(results)) {
+                if (ip.trim() !== '') {
+                    output += `${ip} -> ${ph}\n`;
+                }
+            }
+            document.getElementById('output-text').value = output;
+        }
+
+        function clearText() {
+            document.getElementById('input-text').value = '';
+            document.getElementById('output-text').value = '';
+        }
+
+
+        // This function was addded to see if the input of items  is empty and if it is it shows a message regaring
+        // no ip addresses provded to the output area i.e. output-text of the FE webpage and stops further 
+        // all done by returning true , and is added to all fucntions below to ensure when there is nothing 
+        // entered and someone clicks a button then it will display this message 
+
+        function checkEmptyInput(items) {
+            if (items === '') {
+                document.getElementById('output-text').value = "No IP addresses provided.";
+                return true;
+            }
+            return false;
+        }
+
+        // remain the same as original ones provided, however they do include this new function as explained above and 
+        // explained also below 
+
+        function getTotalIPs() {
+            let items = document.getElementById('input-text').value
+
+            if (checkEmptyInput(items)) return;
+
+            // added this in all funtions based on the new function above here as there was an issue of nothing being displayed 
+            // to show there was nothign being input but buttons were being pressed 
+
+            getWorkingProxy('totalips', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        //let response = this.response
+                        var j = JSON.parse(this.response);
+                        console.log('test -- ' + j.total_ips);
+                        let total_ips = j.total_ips;
+                        displayTotalIP(total_ips);
+                    }
+                };
+                // new fucntion addded, even handler that uld work to see the error being placed instead of leaving blank if backend is not up and running 
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=totalips&items=${items}`, true);
+                xhttp.send();
+                return;
+            });
+        }
+
+
+        function getTotalEmptyIPs() {
+            let items = document.getElementById('input-text').value;
+
+            if (checkEmptyInput(items)) return;
+
+            getWorkingProxy('emptyips', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        //let response = this.response
+                        var j = JSON.parse(this.response);
+                        console.log('test -- ' + j.total_empty_ips);
+                        let total_empty_ips = j.total_empty_ips;
+                        displayTotalEmpty(total_empty_ips);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=emptyips&items=${items}`, true);
+                xhttp.send();
+                return;
+            });
+        }
+
+
+
+        // The following functions which i have added are more a bit more complex than the previous ones prvided, since they are handling more detailed
+        // info rather than just a number. the input is checked just like the other 2 for any empty input befire requesting BE. Then the HTTP request
+        // is sent if there are items present, and instead of a number we are asking the BE before more information on each of them 
+        // then if request is successful then it parses the json repsonse from the server and assigns it to j jsut as before as want to convert and store
+        // json string returned from server into js object to manipulate etc 
+        // did not have the console.log stuff as i was debugging in docker like wit actual input, and also decided to not have the 'return' added 
+        // as data processing and display are already done by the time the function finishes
+        // also want to mention the fact that I decided to diretly use diaply functions ot show the results rather than breaking it down into steps
+
+
+
+        function getTotalValidIPs() {
+            let items = document.getElementById('input-text').value;
+
+            if (checkEmptyInput(items)) return;
+
+            getWorkingProxy('validips', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let j = JSON.parse(this.response);
+                        displayIPValidation(j.results);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=validips&items=${items}`, true);
+                xhttp.send();
+            });
+        }
+
+        function classifyIPs() {
+            let items = document.getElementById('input-text').value;
+            if (checkEmptyInput(items)) return;
+
+            getWorkingProxy('classifyips', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let j = JSON.parse(this.response);
+                        displayIPClassification(j.results);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=classifyips&items=${items}`, true);
+                xhttp.send();
+            });
+        }
+
+        function findCountry() {
+            let items = document.getElementById('input-text').value;
+            if (checkEmptyInput(items)) return;
+
+            getWorkingProxy('countryinfo', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let j = JSON.parse(this.response);
+                        displayCountryInformation(j.results);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=countryinfo&items=${items}`, true);
+                xhttp.send();
+            });
+        }
+
+        function findBadIPs() {
+            let items = document.getElementById('input-text').value;
+            if (checkEmptyInput(items)) return;
+
+            getWorkingProxy('badips', items, function (proxyURL) {
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let j = JSON.parse(this.response);
+                        displayBadIPs(j.results);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    document.getElementById('output-text').value = "Network error as not able to reach the backend service.";
+                };
+
+                xhttp.open("GET", `${proxyURL}?service=badips&items=${items}`, true);
+                xhttp.send();
+            });
+        }
+
+    </script>
+
+    <style type="text/css">
+        body {
+            font-size: 150%;
+            font-family: monospace;
+        }
+
+        label {
+            display: inline-block;
+            width: 150px;
+            text-align: left;
+        }
+
+        #logo {
+            font-family: Calibri, sans-serif;
+            font-weight: lighter;
+            font-size: 30px;
+            color: #505050;
+            margin: 0.5em;
+        }
+
+        #normal-text {
+            font-family: Calibri, sans-serif;
+            font-size: 20px;
+            margin: 0.5em;
+        }
+
+        #ipcheck {
+            text-align: center;
+            margin-top: 1em;
+        }
+
+        #input-div {
+            text-align: center;
+            margin-top: 1em;
+            background-color: #d5d8dc;
+        }
+
+        #output-div {
+            text-align: center;
+            background-color: #808b96;
+        }
+
+        .input-items {
+            font-size: 90%;
+            color: black;
+            background-color: white;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 600px;
+
+        }
+
+        .display-output {
+            font-size: 90%;
+            color: black;
+            background-color: white;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 600px;
+
+        }
+
+        .button-active {
+            background-color: #2874a6;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 50px;
+            width: 400px;
+        }
+
+        .button-inactive {
+            background-color: gray;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 50px;
+            width: 400px;
+        }
+
+        .button-clear {
+            background-color: #c0392b;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="ipcheck">
+        <div id="logo">
+            IP Address Checker
+        </div>
+        <div id="input-div">
+            <p id="normal-text">
+                Paste your IP addresses here (separated by commas)..
+            </p>
+            <textarea class="input-items" id="input-text" rows="5" cols="35"
+                placeholder="Paste your IP addresses here.." value="">
+        </textarea>
+        </div>
+        <div id="output-div">
+            <p id="normal-text">
+                Results
+            </p>
+            <textarea class="display-output" id="output-text" rows="5" cols="35" readonly=1
+                placeholder="Results here..." value="">
+        </textarea>
+        </div>
+        <div>
+            <button class="button-active" onclick="getTotalIPs();">Total IP addresses</button>
+        </div>
+        <div>
+            <button class="button-active" onclick="getTotalEmptyIPs();">Total empty IP addresses</button>
+        </div>
+        <div>
+            <button class="button-active" onclick="getTotalValidIPs();">Total valid IP addresses</button>
+        </div>
+        <div>
+            <button class="button-active" onclick="classifyIPs();">Classify between IPv4 and IPv6</button>
+        </div>
+        <div>
+            <button class="button-active" onclick="findCountry();">Find country information</button>
+        </div>
+        <div>
+            <button class="button-active" onclick="findBadIPs();">Find bad IP addresses</button>
+        </div>
+        <div>
+            <button class="button-clear" onclick="clearText();">Clear</button>
+        </div>
+
+    </div>
+</body>
+
+<script type="text/javascript">
+</script>
+
+</html>
